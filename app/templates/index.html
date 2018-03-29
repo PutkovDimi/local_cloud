@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Storage{% endblock %}
+
+{% block page_content %}
+    <form action="/" method="POST" enctype="multipart/form-data">
+        <input type="file" name="file">
+        <button type="submit">Загрузить</button>
+    </form>
+    <p>
+    <form action="/" method="GET" enctype="multipart/form-data">
+        <select onChange="getSelectedValue(this);">
+            {% for get_file in file_list %}
+                <option>{{ get_file }}</option>
+            {% endfor %}
+        </select>
+        <input type="text" name="nm"/>
+    </form>
+    <a href="{{ url_for('download', filename='CV.pdf') }}">Download me!</a>
+    </p>
+    <p>The local date and time is {{ moment(current_time).format('LLL') }}.</p>
+    <p>That was {{ moment(current_time).fromNow(refresh=True) }}.</p>
+    </div>
+{% endblock %}

@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, request, flash
+from flask import Flask, render_template, request
 from flask import send_from_directory, current_app
 from flask_bootstrap import Bootstrap
 from flask.ext.moment import Moment
@@ -7,6 +7,11 @@ from datetime import datetime
 from flask_mail import Mail
 from flask.ext.mail import Message
 from threading import Thread
+from flask import Blueprint
+from flask.ext.login import LoginManager, login_user, logout_user, login_required
+from flask import redirect, flash, url_for
+from forms import LoginForm
+
 
 UPLOAD_FOLDER = './app/Downloads/'
 ALLOWED_EXTENSIONS = set(['odt', 'txt', 'docx', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
@@ -15,6 +20,8 @@ app = Flask(__name__)
 app.config.from_object('config')
 bootstrap = Bootstrap(app)
 moment = Moment(app)
+auth = Blueprint('auth', __name__)
+
 app.config['MAIL_SERVER'] = 'smtp.googlemail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
@@ -22,8 +29,48 @@ app.config['MAIL_USERNAME'] = 'username'
 app.config['MAIL_PASSWORD'] = 'password'
 app.config['STORAGE_MAIL_SUBJECT_PREFIX'] = '[Storage]'
 app.config['STORAGE_MAIL_SENDER'] = 'Storage Admin <putkovdimi@gmail.com>'
+app.register_blueprint(auth, url_prefix='/auth')
 
 mail = Mail(app)
+
+login_manager = LoginManager()
+login_manager.session_protection = 'strong'
+login_manager.login_view = 'auth.login'
+login_manager.init_app(app)
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = form.email.data
+        password = form.password.data
+        # actions with db: check that it exists already
+        # if user is new:
+        if user and password:
+            login_user(user, form.remember_me.data)
+            return redirect(request.args.get('next') or url_for('main.index'))
+        flash('Invalid username or password')
+    return render_template('auth/login.html', form=form)
+
+
+@app.route('/secret')
+@login_required
+def secret():
+    return 'Only authenticated users are allowed!'
+
+
+@auth.route('/login')
+def login():
+    return render_template('auth/login.html')
+
+
+@auth.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    flash('You have been logged out')
+    return redirect(url_for('main.index'))
 
 
 def send_email(to, subject, template, **kwargs):
@@ -81,8 +128,6 @@ def index():
     file_list = getFiles()
     return render_template("index.html",
                            args=args, file_list=file_list, current_time=datetime.utcnow())
-
-
 
 
 @app.route("/upload/<filename>", methods=["GET"])

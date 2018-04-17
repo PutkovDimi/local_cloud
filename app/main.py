@@ -2,18 +2,19 @@ import os
 from flask import Flask, render_template, request
 from flask import send_from_directory, current_app
 from flask_bootstrap import Bootstrap
-from flask.ext.moment import Moment
+from flask_moment import Moment
 from datetime import datetime
 from flask_mail import Mail
-from flask.ext.mail import Message
+from flask_mail import Message
 from threading import Thread
 from flask import Blueprint
-from flask.ext.login import LoginManager, login_user, logout_user, login_required
+from flask_login import current_user, logout_user, login_required
 from flask import redirect, flash, url_for
-from forms import LoginForm
+from app.auth.forms import LoginForm
+from app.models import User
+from app import login_manager
 
-
-UPLOAD_FOLDER = './app/Downloads/'
+UPLOAD_FOLDER = '/Downloads/'
 ALLOWED_EXTENSIONS = set(['odt', 'txt', 'docx', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
 
 app = Flask(__name__)
@@ -33,24 +34,22 @@ app.register_blueprint(auth, url_prefix='/auth')
 
 mail = Mail(app)
 
-login_manager = LoginManager()
-login_manager.session_protection = 'strong'
-login_manager.login_view = 'auth.login'
-login_manager.init_app(app)
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
-    if form.validate_on_submit():
-        user = form.email.data
-        password = form.password.data
-        # actions with db: check that it exists already
-        # if user is new:
-        if user and password:
-            login_user(user, form.remember_me.data)
-            return redirect(request.args.get('next') or url_for('main.index'))
-        flash('Invalid username or password')
+    # checks if the user is authernticated
+    # or not, if yes it skips authentfic.
+    # does not allow user to use get method
+    if request.method == 'GET':
+        return render_template('auth/login.html',
+                               form=form,
+                               title='Login')
     return render_template('auth/login.html', form=form)
 
 
@@ -93,8 +92,8 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-def getFiles():
-    return os.listdir(UPLOAD_FOLDER)
+def get_files():
+    return os.listdir(os.path.dirname(os.path.abspath(__file__)) + UPLOAD_FOLDER)
 
 
 @app.errorhandler(404)
@@ -110,7 +109,7 @@ def internal_server_error(e):
 @app.route("/", methods=["GET", "POST"])
 def index():
     args = {"method": "GET"}
-    file_list = getFiles()
+    file_list = get_files()
     if request.method == "POST":
         file = request.files["file"]
         if not file.filename:
@@ -125,7 +124,7 @@ def index():
                            'mail/new_file', filename=file.filename)
                 file.save(UPLOAD_FOLDER + file.filename)
         args["method"] = "POST"
-    file_list = getFiles()
+    file_list = get_files()
     return render_template("index.html",
                            args=args, file_list=file_list, current_time=datetime.utcnow())
 

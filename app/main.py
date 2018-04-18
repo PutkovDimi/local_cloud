@@ -1,48 +1,43 @@
 import os
 from flask import Flask, render_template, request
 from flask import send_from_directory, current_app
-from flask_bootstrap import Bootstrap
-from flask_moment import Moment
 from datetime import datetime
-from flask_mail import Mail
 from flask_mail import Message
 from threading import Thread
-from flask import Blueprint
-from flask_login import current_user, logout_user, login_required
+from flask_login import login_user, logout_user, login_required
 from flask import redirect, flash, url_for
 from app.auth.forms import LoginForm
 from app.models import User
-from app import login_manager
+from app import create_app
+from app import get_DB_object
+from app import auth
+from flask_bootstrap import Bootstrap
+from flask_moment import Moment
+from flask_mail import Mail
+from flask import Blueprint
 
 UPLOAD_FOLDER = '/Downloads/'
 ALLOWED_EXTENSIONS = set(['odt', 'txt', 'docx', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
 
-app = Flask(__name__)
-app.config.from_object('config')
-bootstrap = Bootstrap(app)
-moment = Moment(app)
-auth = Blueprint('auth', __name__)
-
-app.config['MAIL_SERVER'] = 'smtp.googlemail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'username'
-app.config['MAIL_PASSWORD'] = 'password'
-app.config['STORAGE_MAIL_SUBJECT_PREFIX'] = '[Storage]'
-app.config['STORAGE_MAIL_SENDER'] = 'Storage Admin <putkovdimi@gmail.com>'
-app.register_blueprint(auth, url_prefix='/auth')
+app, auth = create_app(os.getenv('FLASK_CONFIG') or 'default')
+# bootstrap = Bootstrap(app)
+# moment = Moment(app)
+# auth = Blueprint('auth', __name__)
 
 mail = Mail(app)
-
-
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
 
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
+    if request.method == "POST":
+        user_id = get_DB_object.find_user(email=form.email.data)["_id"]
+        if user_id:
+            user = User(user_id=user_id)
+            if user:
+                login_user(user, form.remember_me.data)
+                return redirect(request.args.get('next') or url_for('index'))
+        flash("Invalid email or password")
     # checks if the user is authernticated
     # or not, if yes it skips authentfic.
     # does not allow user to use get method

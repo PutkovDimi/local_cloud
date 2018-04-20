@@ -117,7 +117,8 @@ def index():
                 flash('Your file was saved successfully')
                 send_email("putkovdimi@gmail.com", 'New File',
                            'mail/new_file', filename=file.filename)
-                file.save(UPLOAD_FOLDER + file.filename)
+                print(os.path.dirname(os.path.abspath(__file__)) + UPLOAD_FOLDER + file.filename)
+                file.save(os.path.dirname(os.path.abspath(__file__)) + UPLOAD_FOLDER + file.filename)
         args["method"] = "POST"
     file_list = get_files()
     return render_template("index.html",

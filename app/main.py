@@ -10,19 +10,12 @@ from app.auth.forms import LoginForm
 from app.models import User
 from app import create_app
 from app import get_DB_object
-from app import auth
-from flask_bootstrap import Bootstrap
-from flask_moment import Moment
 from flask_mail import Mail
-from flask import Blueprint
 
 UPLOAD_FOLDER = '/Downloads/'
 ALLOWED_EXTENSIONS = set(['odt', 'txt', 'docx', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
 
 app, auth = create_app(os.getenv('FLASK_CONFIG') or 'default')
-# bootstrap = Bootstrap(app)
-# moment = Moment(app)
-# auth = Blueprint('auth', __name__)
 
 mail = Mail(app)
 
@@ -127,7 +120,7 @@ def index():
 
 @app.route("/upload/<filename>", methods=["GET"])
 def download(filename):
-    upload_path = os.path.join(current_app.root_path + UPLOAD_FOLDER[1::])
+    upload_path = os.path.join(current_app.root_path + UPLOAD_FOLDER)
     print(upload_path)
     return send_from_directory(upload_path, filename=filename)
 

@@ -4,18 +4,18 @@
 {% block page_content %}
     <form action="/" method="POST" enctype="multipart/form-data">
         <input type="file" name="file">
-        <button type="submit">Загрузить</button>
+        <button class="btn btn-info" type="submit">Загрузить</button>
     </form>
     <p>
     <form action="/" method="GET" enctype="multipart/form-data">
-        <select onChange="getSelectedValue(this);">
+        <select class="form-control col-md-4">
             {% for get_file in file_list %}
                 <option>{{ get_file }}</option>
             {% endfor %}
         </select>
-        <input type="text" name="nm"/>
     </form>
-    <a href="{{ url_for('download', filename='CV.pdf') }}">Download me!</a>
+    <br>
+    <a class="btn btn-info" role="button" href="{{ url_for('download', filename='CV.pdf') }}">Download me!</a>
     </p>
     <p>The local date and time is {{ moment(current_time).format('LLL') }}.</p>
     <p>That was {{ moment(current_time).fromNow(refresh=True) }}.</p>

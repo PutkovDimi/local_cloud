@@ -1,56 +1,50 @@
 import os
 from flask import Flask, render_template, request
 from flask import send_from_directory, current_app
-from flask_bootstrap import Bootstrap
-from flask.ext.moment import Moment
 from datetime import datetime
-from flask_mail import Mail
-from flask.ext.mail import Message
+from flask_mail import Message
 from threading import Thread
-from flask import Blueprint
-from flask.ext.login import LoginManager, login_user, logout_user, login_required
+from flask_login import login_user, logout_user, login_required
 from flask import redirect, flash, url_for
-from forms import LoginForm
+from app.auth.forms import LoginForm
+from app.models import User
+from app import create_app
+from app import get_DB_object
+from app import auth
+from flask_bootstrap import Bootstrap
+from flask_moment import Moment
+from flask_mail import Mail
+from flask import Blueprint
 
-
-UPLOAD_FOLDER = './app/Downloads/'
+UPLOAD_FOLDER = '/Downloads/'
 ALLOWED_EXTENSIONS = set(['odt', 'txt', 'docx', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
 
-app = Flask(__name__)
-app.config.from_object('config')
-bootstrap = Bootstrap(app)
-moment = Moment(app)
-auth = Blueprint('auth', __name__)
-
-app.config['MAIL_SERVER'] = 'smtp.googlemail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'username'
-app.config['MAIL_PASSWORD'] = 'password'
-app.config['STORAGE_MAIL_SUBJECT_PREFIX'] = '[Storage]'
-app.config['STORAGE_MAIL_SENDER'] = 'Storage Admin <putkovdimi@gmail.com>'
-app.register_blueprint(auth, url_prefix='/auth')
+app, auth = create_app(os.getenv('FLASK_CONFIG') or 'default')
+# bootstrap = Bootstrap(app)
+# moment = Moment(app)
+# auth = Blueprint('auth', __name__)
 
 mail = Mail(app)
-
-login_manager = LoginManager()
-login_manager.session_protection = 'strong'
-login_manager.login_view = 'auth.login'
-login_manager.init_app(app)
 
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
-    if form.validate_on_submit():
-        user = form.email.data
-        password = form.password.data
-        # actions with db: check that it exists already
-        # if user is new:
-        if user and password:
-            login_user(user, form.remember_me.data)
-            return redirect(request.args.get('next') or url_for('main.index'))
-        flash('Invalid username or password')
+    if request.method == "POST":
+        user_id = get_DB_object.find_user(email=form.email.data)["_id"]
+        if user_id:
+            user = User(user_id=user_id)
+            if user:
+                login_user(user, form.remember_me.data)
+                return redirect(request.args.get('next') or url_for('index'))
+        flash("Invalid email or password")
+    # checks if the user is authernticated
+    # or not, if yes it skips authentfic.
+    # does not allow user to use get method
+    if request.method == 'GET':
+        return render_template('auth/login.html',
+                               form=form,
+                               title='Login')
     return render_template('auth/login.html', form=form)
 
 
@@ -93,8 +87,8 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-def getFiles():
-    return os.listdir(UPLOAD_FOLDER)
+def get_files():
+    return os.listdir(os.path.dirname(os.path.abspath(__file__)) + UPLOAD_FOLDER)
 
 
 @app.errorhandler(404)
@@ -110,7 +104,7 @@ def internal_server_error(e):
 @app.route("/", methods=["GET", "POST"])
 def index():
     args = {"method": "GET"}
-    file_list = getFiles()
+    file_list = get_files()
     if request.method == "POST":
         file = request.files["file"]
         if not file.filename:
@@ -123,9 +117,10 @@ def index():
                 flash('Your file was saved successfully')
                 send_email("putkovdimi@gmail.com", 'New File',
                            'mail/new_file', filename=file.filename)
-                file.save(UPLOAD_FOLDER + file.filename)
+                print(os.path.dirname(os.path.abspath(__file__)) + UPLOAD_FOLDER + file.filename)
+                file.save(os.path.dirname(os.path.abspath(__file__)) + UPLOAD_FOLDER + file.filename)
         args["method"] = "POST"
-    file_list = getFiles()
+    file_list = get_files()
     return render_template("index.html",
                            args=args, file_list=file_list, current_time=datetime.utcnow())
 

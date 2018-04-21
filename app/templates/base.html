@@ -1,14 +1,22 @@
 {% extends "bootstrap/base.html" %}
 {% block title %}Storage{% endblock %}
 
+</head>
+<body>
+
 {% block head %}
     {{ super() }}
     <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+    <script src="../static/jquery.js"></script>
+     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="../static/css/bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="../static/css/setBackground.css">
 {% endblock %}
 
 
 {% block navbar %}
+
     <div class="navbar navbar-inverse" role="navigation">
         <div class="container">
             <div class="navbar-header">
@@ -28,12 +36,13 @@
             </div>
         </div>
     </div>
-    <ul class="nav navbar-nav navbar-right">
-            <li><a href="{{ url_for('login') }}">Sign In</a></li>
+    <ul class="nav navbar-nav navbar-rightg">
+        <li><a href="{{ url_for('login') }}">Sign In</a></li>
     </ul>
 {% endblock %}
 
 {% block content %}
+    <body class="base">
     <div class="container">
         {% for message in get_flashed_messages() %}
             <div class="alert alert-warning">
@@ -44,10 +53,10 @@
 
         {% block page_content %}{% endblock %}
     </div>
+    </body>
 {% endblock %}
 
 {% block scripts %}
     {{ super() }}
     {{ moment.include_moment() }}
 {% endblock %}
-

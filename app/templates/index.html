@@ -8,14 +8,28 @@
     </form>
     <p>
     <form action="/" method="GET" enctype="multipart/form-data">
-        <select class="form-control col-md-4">
+        <select id="choosing" class="form-control col-md-4">
+            <option name="first">Choose your file</option>
             {% for get_file in file_list %}
-                <option>{{ get_file }}</option>
+                <option name={{ get_file }}>{{ get_file }}</option>
             {% endfor %}
         </select>
     </form>
     <br>
-    <a class="btn btn-info" role="button" href="{{ url_for('download', filename='CV.pdf') }}">Download me!</a>
+    <script>
+        $(document).ready(function () {
+            $('#choosing').change(function () {
+                var fileName = ($('#choosing option:selected').attr("name"));
+                $('#downloadFile').attr("href", "{{ url_for('download', filename='name' )}}".replace('name', fileName));
+            })
+        });
+    </script>
+    <div id="button">
+        <a class="btn btn-info"
+           id="downloadFile"
+           role="button"
+        >Download me!</a>
+    </div>
     </p>
     <p>The local date and time is {{ moment(current_time).format('LLL') }}.</p>
     <p>That was {{ moment(current_time).fromNow(refresh=True) }}.</p>

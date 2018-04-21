@@ -13,14 +13,7 @@ login_manager = LoginManager()
 login_manager.session_protection = 'strong'
 login_manager.login_view = 'auth.login'
 
-# app = Flask(__name__)
-# login_manager.init_app(app)
-# app.config.from_object('config')
-# bootstrap = Bootstrap(app)
-# moment = Moment(app)
 
-
-# mail = Mail(app)
 
 def create_app(config_name):
     app = Flask(__name__)
@@ -28,10 +21,10 @@ def create_app(config_name):
     app.config['MAIL_SERVER'] = 'smtp.googlemail.com'
     app.config['MAIL_PORT'] = 587
     app.config['MAIL_USE_TLS'] = True
-    app.config['MAIL_USERNAME'] = 'username'
-    app.config['MAIL_PASSWORD'] = 'password'
+    app.config['MAIL_USERNAME'] = 'mail address'  # to
+    app.config['MAIL_PASSWORD'] = 'password'  # from's password
     app.config['STORAGE_MAIL_SUBJECT_PREFIX'] = '[Storage]'
-    app.config['STORAGE_MAIL_SENDER'] = 'Storage Admin <putkovdimi@gmail.com>'
+    app.config['STORAGE_MAIL_SENDER'] = 'Storage Admin <putkovdimi@gmail.com>'  # from
 
     auth = Blueprint('auth', __name__)
     app.register_blueprint(auth, url_prefix='/auth')

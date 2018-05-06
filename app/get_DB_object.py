@@ -24,10 +24,10 @@ def find_user(user_id=None, email=None):
 
 
 # insert new user in DB
-def create_user(login, email, password):
+def create_user(email, password):
     db = get_db_object()
     user_fields = DB_EXAMPLE
-    user_fields.update({"login": login,
+    user_fields.update({"login": email,
                         "email": email,
                         "password": password})
     insert_id = db[DB].insert_one(user_fields).inserted_id
@@ -51,4 +51,4 @@ def delete_file(login="Dima", del_file="file"):
 
 
 if __name__ == '__main__':
-    print(get_db_object()[DB].find_one({"_id": ObjectId('5ad773cbfdef703d31f2bc30')})["login"])
+    print(create_user("checkemail", "password"))

@@ -6,11 +6,13 @@ from flask_mail import Message
 from threading import Thread
 from flask_login import login_user, logout_user, login_required
 from flask import redirect, flash, url_for
-from app.auth.forms import LoginForm
+from app.auth.forms import LoginForm, SignUp
 from app.models import User
 from app import create_app
 from app import get_DB_object
 from flask_mail import Mail
+from app.models import load_user
+from configparser import ConfigParser
 
 UPLOAD_FOLDER = '/Downloads/'
 ALLOWED_EXTENSIONS = set(['odt', 'txt', 'docx', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
@@ -20,17 +22,28 @@ app, auth = create_app(os.getenv('FLASK_CONFIG') or 'default')
 mail = Mail(app)
 
 
+@app.route('/sign_up', methods=['GET', 'POST'])
+def sign_up():
+    form = SignUp()
+    if request.method == "POST":
+        user_id = get_DB_object.create_user(email=form.email.data, password=form.password.data)
+        user = User(user_id=user_id)
+        login_user(user, form.remember_me.data)
+        return redirect(request.args.get('next') or url_for('index'))
+    return render_template('auth/sign_up.html', form=form)
+
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
     if request.method == "POST":
-        user_id = get_DB_object.find_user(email=form.email.data)["_id"]
+        user_id = get_DB_object.find_user(email=form.email.data)
         if user_id:
-            user = User(user_id=user_id)
+            user = User(user_id=user_id["_id"])
             if user:
                 login_user(user, form.remember_me.data)
                 return redirect(request.args.get('next') or url_for('index'))
-        flash("Invalid email or password")
+        return redirect(url_for('sign_up'))
     # checks if the user is authernticated
     # or not, if yes it skips authentfic.
     # does not allow user to use get method
@@ -96,6 +109,11 @@ def internal_server_error(e):
 
 @app.route("/", methods=["GET", "POST"])
 def index():
+    with open(os.path.dirname(os.path.abspath(__file__))+'/id.txt','r') as id:
+        userr = id.readline()
+    print(userr)
+    if userr:
+        print(userr.username, '!')
     args = {"method": "GET"}
     file_list = get_files()
     if request.method == "POST":

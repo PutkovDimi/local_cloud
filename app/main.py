@@ -11,10 +11,9 @@ from app.models import User
 from app import create_app
 from app import get_DB_object
 from flask_mail import Mail
-from app.models import load_user
+from app.current_path_to_dir import current_path_to_dir
 from configparser import ConfigParser
 
-UPLOAD_FOLDER = '/Downloads/'
 ALLOWED_EXTENSIONS = set(['odt', 'txt', 'docx', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
 
 app, auth = create_app(os.getenv('FLASK_CONFIG') or 'default')
@@ -93,8 +92,8 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-def get_files():
-    return os.listdir(os.path.dirname(os.path.abspath(__file__)) + UPLOAD_FOLDER)
+def get_files(path):
+    return os.listdir(path)
 
 
 @app.errorhandler(404)
@@ -107,39 +106,49 @@ def internal_server_error(e):
     return render_template('500.html'), 500
 
 
-@app.route("/", methods=["GET", "POST"])
-def index():
-    with open(os.path.dirname(os.path.abspath(__file__))+'/id.txt','r') as id:
+def get_user_id():
+    with open(os.path.dirname(os.path.abspath(__file__)) + '/id.txt', 'r') as id:
         userr = id.readline()
     print(userr)
+    return userr
+
+
+@app.route("/", methods=["GET", "POST"])
+def index():
+    userr = get_user_id()
     if userr:
-        print(userr.username, '!')
-    args = {"method": "GET"}
-    file_list = get_files()
-    if request.method == "POST":
-        file = request.files["file"]
-        if not file.filename:
-            flash('Looks like you have not chosen any file')
-            args["res"] = "No selected files"
-        if file and allowed_file(file.filename):
-            if file.filename in file_list:
-                flash("It already exists brother")
-            else:
-                flash('Your file was saved successfully')
-                send_email("putkovdimi@gmail.com", 'New File',
-                           'mail/new_file', filename=file.filename)
-                print(os.path.dirname(os.path.abspath(__file__)) + UPLOAD_FOLDER + file.filename)
-                file.save(os.path.dirname(os.path.abspath(__file__)) + UPLOAD_FOLDER + file.filename)
-        args["method"] = "POST"
-    file_list = get_files()
+        print(User(userr).username, '!')
+        path = current_path_to_dir(User(userr).username)
+        args = {"method": "GET"}
+        file_list = get_files(path)
+        if request.method == "POST":
+            file = request.files["file"]
+            if not file.filename:
+                flash('Looks like you have not chosen any file')
+                args["res"] = "No selected files"
+            if file and allowed_file(file.filename):
+                if file.filename in file_list:
+                    flash("It already exists brother")
+                else:
+                    flash('Your file was saved successfully')
+                    send_email("putkovdimi@gmail.com", 'New File',
+                               'mail/new_file', filename=file.filename)
+                    print(path + file.filename)
+                    file.save(path + file.filename)
+            args["method"] = "POST"
+        file_list = get_files(path)
     return render_template("index.html",
                            args=args, file_list=file_list, current_time=datetime.utcnow())
 
 
 @app.route("/upload/<filename>", methods=["GET"])
 def download(filename):
-    upload_path = os.path.join(current_app.root_path + UPLOAD_FOLDER)
-    print(upload_path)
+    userr = get_user_id()
+    if userr:
+        print(User(userr).username, '!')
+        path = current_path_to_dir(User(userr).username)
+        upload_path = os.path.join(path)
+        print(upload_path)
     return send_from_directory(upload_path, filename=filename)
 
 

@@ -29,7 +29,7 @@ def sign_up():
         user_id = get_DB_object.create_user(email=form.email.data, password=form.password.data)
         user = User(user_id=user_id)
         login_user(user, form.remember_me.data)
-        return redirect(request.args.get('next') or url_for('index'))
+        return redirect(url_for('index'))
     return render_template('auth/sign_up.html', form=form)
 
 
@@ -106,14 +106,19 @@ def page_not_found(e):
 def internal_server_error(e):
     return render_template('500.html'), 500
 
+@app.errorhandler(400)
+def internal_server_error(e):
+    return render_template('400.html'), 400
+
 
 @app.route("/", methods=["GET", "POST"])
+@login_required
 def index():
     with open(os.path.dirname(os.path.abspath(__file__))+'/id.txt','r') as id:
         userr = id.readline()
     print(userr)
     if userr:
-        print(userr.username, '!')
+        print(userr, '!')
     args = {"method": "GET"}
     file_list = get_files()
     if request.method == "POST":

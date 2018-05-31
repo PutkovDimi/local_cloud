@@ -1,10 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends "base.html" %}
 
-</body>
-</html>
+{% block title %} Internal Server Error{% endblock %}
+
+{% block page_content %}
+    <div class="page-header">
+        <h1 id="no-access">For use Storage you need to log in</h1>
+    </div>
+{% endblock %}

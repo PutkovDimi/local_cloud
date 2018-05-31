@@ -1,31 +1,8 @@
 import unittest
 from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
-import time
 import pytest
 import random, string
 import os
-
-'''
-  driver = self.driver
-        driver.get(URL)
-        # select course
-        elem = driver.find_element_by_xpath("//select[@id='select_course']")
-        all_options = elem.find_elements_by_tag_name("option")
-        all_options[1].click()
-        chosen_course = all_options[1].text
-        # fill datepicker_start
-        elem = driver.find_element_by_xpath("//input[@id='datepicker_start']")
-        elem.send_keys(SMALLER_DATE, Keys.ENTER)
-        # fill datepicker_end
-        elem = driver.find_element_by_xpath("//input[@id='datepicker_end']")
-        elem.send_keys(BIGGER_DATE, Keys.ENTER)
-        # add course
-        elem = driver.find_element_by_xpath("//input[@class='btn btn-primary']")
-        elem.click()
-        elem = driver.find_element_by_xpath("//table[@id='table_courses']/tbody[1]/tr[1]/td[1]")
-        assert elem.text == chosen_course
-'''
 
 TEST_FILE = "/tests/SeleniumTests/TestFile.txt"
 
@@ -67,8 +44,6 @@ class ElementTest(unittest.TestCase):
     def test_upload_files(self):
         driver = self.driver
         driver.get("http://127.0.0.1:5000/")
-        #elem = driver.find_element_by_xpath("//*[@id='upload-file']")
-        #elem.send_keys(os.getcwd() + TEST_FILE)
         elem = driver.find_element_by_xpath("//input[@id='upload-file']")
         elem.send_keys(os.getcwd() + TEST_FILE)
         elem.find_element_by_xpath("//button[@id='submit-button']")
